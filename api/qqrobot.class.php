@@ -6,12 +6,29 @@ class qqrobot{
 	public static function handle($json){
 		
 	}
+	public static function robot_encode_string($text){
+		$text=str_replace('&', '&amp;',$text);
+		$text=str_replace('[', '&#91;',$text);
+		$text=str_replace(']', '&#93;',$text);
+		$text=str_replace(',', '&#44;',$text);
+		$text=str_replace("\n",'[enter]',$text);
+		return $text;
+	}
+	public static function robot_decode_string($text){
+		$text=preg_replace_callback('/\[LQ:utf8,0x(.*?)\]/is',function ($matches) {
+		    return hex2bin($matches[1]);
+		},$text);
+		$text=str_replace('[enter]',"\n",$text);
+		$text=str_replace('&#44;', ',',$text);	
+		$text=str_replace('&#93;', ']',$text);
+		$text=str_replace('&#91;', '[',$text);
+		$text=str_replace('&amp;', '&',$text);
+		return $text;
+	}
 	public static function post($url,$data){
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_URL, $url);
 		curl_setopt($curl, CURLOPT_HEADER, 0);
-		// curl_setopt($curl, CURLOPT_PROXY, "202.193.80.87:8080");//加上代理不卡顿，否则第一次连接172.16.0.63会卡顿
-		// curl_setopt($curl, CURLOPT_PROXYUSERPWD, "yiban:GLUTyiban.cn");//加上代理不卡顿，否则第一次连接172.16.0.63会卡顿
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($curl, CURLOPT_POST, 1);//设置post请求
 		curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(["port"=>self::$port,"pushRobotData"=>$data]));//设置post的数据
@@ -26,8 +43,6 @@ class qqrobot{
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_URL, $url);
 		curl_setopt($curl, CURLOPT_HEADER, 0);
-		// curl_setopt($curl, CURLOPT_PROXY, "202.193.80.87:8080");//加上代理不卡顿，否则第一次连接172.16.0.63会卡顿
-		// curl_setopt($curl, CURLOPT_PROXYUSERPWD, "yiban:GLUTyiban.cn");//加上代理不卡顿，否则第一次连接172.16.0.63会卡顿
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($curl, CURLOPT_POST, 1);//设置post请求
 		curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(["port"=>self::$port,"pushRobotData"=>$data]));//设置post的数据
@@ -62,6 +77,9 @@ class qqrobot{
 	public static function sendMsg($type, $group, $qq, $msg, $structureType = 0, $subType = 0){
 		return self::send("sendMsg",[$type,$group,$qq,$msg,$structureType,$subType]);
 	}
+	public static function sendText($type, $group, $qq, $msg, $structureType = 0, $subType = 0){
+		return self::send("sendMsg",[$type,$group,$qq,self::robot_encode_string($msg),$structureType,$subType]);
+	}
 	/**
 	 * 发送私聊消息
 	 * @param string $qq
@@ -72,6 +90,9 @@ class qqrobot{
 	 */
 	public static function sendPrivateMsg($qq, $msg, $structureType = 0, $subType = 0){//向QQ发送消息
 		return self::send("sendPrivateMsg",[$qq,$msg,$structureType, $subType]);
+	}
+	public static function sendPrivateText($qq, $msg, $structureType = 0, $subType = 0){//向QQ发送消息
+		return self::send("sendPrivateMsg",[$qq,self::robot_encode_string($msg),$structureType, $subType]);
 	}
 	/**
 	 * 发送群消息
@@ -84,6 +105,10 @@ class qqrobot{
 	public static function sendGroupMsg($groupId, $msg, $structureType = 0, $subType = 0){//群聊消息
 		return self::send("sendGroupMsg",[$groupId, $msg, $structureType, $subType]);
 	}
+	public static function sendGroupText($groupId, $msg, $structureType = 0, $subType = 0){//群聊消息
+		return self::send("sendGroupMsg",[$groupId, self::robot_encode_string($msg), $structureType, $subType]);
+	}
+	
 	/**
 	 * 发送讨论组消息
 	 * @param string $discuss
@@ -94,6 +119,9 @@ class qqrobot{
 	 */
 	public static function sendDiscussMsg($discuss, $msg, $structureType = 0, $subType = 0){//获取登录的QQ
 		return self::send("sendDiscussMsg",[$discuss, $msg, $structureType, $subType]);
+	}
+	public static function sendDiscussText($discuss, $msg, $structureType = 0, $subType = 0){//获取登录的QQ
+		return self::send("sendDiscussMsg",[$discuss, self::robot_encode_string($msg), $structureType, $subType]);
 	}
 	/**
 	 * 向QQ点赞
